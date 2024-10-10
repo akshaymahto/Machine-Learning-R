@@ -1,0 +1,231 @@
+---
+title: "Heart Diseases Problem.Rmd"
+author: "akshay"
+date: "2024-09-26"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+
+
+```{r}
+library(dplyr)
+library(ggplot2)
+
+
+# open these files and examine the data in them. Note that the files do not have aheader and the missing values are marked by ”?” character. Each file contains the 14 attributes described here (see Variables Table and Additional Variable Information). Load each file to adataframe (remember to set na.string=”?” so that ”?” is recognized as missing not a data value
+
+# Set missing value indicator
+na_string <- "?"
+
+# Load datasets
+cleveland_data <- read.table("processed.cleveland.data", na.strings = "?")
+hungarian_data <- read.table("processed.hungarian.data", na.strings = "?")
+switzerland_data <- read.table("processed.switzerland.data", na.strings = "?")
+va_data <- read.table("processed.va.data", na.strings = "?")
+
+# View first few rows of each dataset
+head(cleveland_data)
+head(hungarian_data)
+head(switzerland_data)
+head(va_data)
+
+```
+
+
+
+
+```{r}
+# Check the number of columns in each dataset
+ncol(cleveland_data)  # Should be 14
+ncol(hungarian_data)  # Should be 14
+ncol(switzerland_data)  # Should be 14
+ncol(va_data)  # Should be 14
+
+# If they all have 14 columns, proceed to bind
+heart_disease_data <- rbind(cleveland_data, hungarian_data, switzerland_data, va_data)
+
+# Set column names only if the number of columns is correct
+if (ncol(heart_disease_data) == 14) {
+  colnames(heart_disease_data) <- c("Age", "Sex", "Chest Pain", "Resting BP", "Cholesterol",
+                  "Fasting BS", "Resting ECG", "Max Heart Rate",
+                  "Exercise Angina", "Oldpeak", "Slope", "CA", "Thal", "Target")
+} 
+```
+```{r}
+# 3. Explore structure and calculate missing value percentage
+
+# Check the structure of the dataset
+str(heart_disease_data)
+
+# Calculate the percentage of rows with missing values
+missing_percentage <- (sum(!complete.cases(heart_disease_data)) / nrow(heart_disease_data)) * 100
+
+# Print the result
+cat("Percentage of rows with missing values:", missing_percentage, "%\n")
+
+```
+
+```{r}
+# 4. Specify the type of each variable as follows:
+# – Specify whether the variable is categorical(qualitative) or numeric(quantitative)?
+# – For categorical variables, specify whether it is a nominal variable or an ordinal variable.
+# – For numerical variables, specify whether it is an interval-scaled variables or ratio-scaled variables?
+variable_info <- data.frame(
+  Variable = colnames(heart_disease_data),
+  Type = c("Numeric", "Categorical", "Categorical", "Numeric", "Numeric",
+           "Categorical", "Categorical", "Numeric", "Categorical",
+           "Numeric", "Categorical", "Categorical", "Categorical", "Categorical"),
+  Description = c("Age", "Sex", "Chest Pain", "Resting BP", "Cholesterol",
+                  "Fasting BS", "Resting ECG", "Max Heart Rate",
+                  "Exercise Angina", "Oldpeak", "Slope", "CA", "Thal", "Target")
+)
+print(variable_info)
+```
+
+
+
+
+```{r}
+colnames(heart_disease_data)
+
+```
+```{r}
+
+
+```
+
+
+
+
+```{r}
+# 5 Convert all categorical variables to “factor” using factor function (set the “labels” option to give meaningful names/labels to each level). 
+
+# Sample code assuming you have identified which columns are categorical
+
+# First, let's check the structure of the dataframe to identify categorical columns
+str(heart_disease_data)
+
+# Assuming we identify columns 1, 2, and 5 as categorical for example
+# (we need to replace this with the actual categorical columns in your dataframe)
+
+# Let's create a vector of column indices or names that are categorical
+categorical_columns <- c(1, 2, 5)  # Replace with actual indices or names of your categorical columns
+
+# Define meaningful labels for each categorical column
+# Note: This is just an example, you need to set your own meaningful labels
+labels_list <- list(
+  c("Label1", "Label2", "Label3"),  # Labels for column 1
+  c("LabelA", "LabelB"),            # Labels for column 2
+  c("Yes", "No")                    # Labels for column 5
+)
+
+# Check the structure again to ensure changes
+str(heart_disease_data)
+
+
+
+```
+```{r}
+# 6 What is the median and mode of the age attribute.
+
+median_age <- median(heart_disease_data$age, na.rm = TRUE)
+mode_age <- as.numeric(names(sort(table(heart_disease_data$age), decreasing = TRUE)[1]))
+cat("Median age:", median_age, "\n")
+cat("Mode age:", mode_age, "\n")
+
+```
+```{r}
+# 7 Use ”ifelse” and ”factor” functions to create a new factor variable (call it ”diagnosis”) which takes the value ”No” if column 14 has the value zero and ”Yes” otherwise. Replace column 14 of your dataframe with this new variable
+
+# Check if the dataframe has at least 14 columns
+if (ncol(heart_disease_data) >= 14) {
+  # Create the 'diagnosis' variable based on the condition for column 14
+  heart_disease_data[, 14] <- factor(ifelse(heart_disease_data[, 14] == 0, "No", "Yes"))
+  
+  # Rename the 14th column to 'diagnosis' for clarity
+  names(heart_disease_data)[14] <- "diagnosis"
+
+}
+
+
+```
+
+
+```{r}
+# 8  Explore the relationship between “diagnosis” variable you created above and the following attributes in the dataset:
+# – age
+# – sex
+# – trestbps
+# – fbs
+# – slope
+#Which variables are associated with “diagnosis”? Use appropriate plots and statistical tests to answer this question. Interpret the result of each test. (Note to get full credit for this question, you should use both an appropriate plot and an appropriate statistics test to examine the relationship between each of these variables and diagnosis. You should also interpret each plot and test statistics.
+
+attributes <- c("age", "sex", "resting_bp", "fasting_bs", "slope")
+library(rlang)  # Make sure to load rlang for tidy evaluation
+library(ggplot2)  # For plotting
+
+# Function to plot and perform statistical tests
+explore_relationship <- function(var) {
+  if (is.numeric(heart_disease_data[[var]])) {
+    # Plot histogram for numeric variables
+    ggplot(heart_disease_data, aes(x = !!sym(var), fill = diagnosis)) +
+      geom_histogram(position = "identity", alpha = 0.5, bins = 30) +
+      labs(title = paste("Histogram of", var, "by Diagnosis")) +
+      theme_minimal() +
+      stat_summary(fun = mean, geom = "vline", aes(xintercept = ..x..), color = "blue", linetype = "dashed")
+    
+    # Pearson correlation test
+    cor_test <- cor.test(heart_disease_data[[var]], as.numeric(heart_disease_data$diagnosis), method = "pearson")
+    print(cor_test)
+    
+  } else {
+    # Plot bar chart for categorical variables
+    ggplot(heart_disease_data, aes(x = !!sym(var), fill = diagnosis)) +
+      geom_bar(position = "dodge") +
+      labs(title = paste("Bar plot of", var, "by Diagnosis")) +
+      theme_minimal()
+    
+    # Check for zero counts in the table
+    contingency_table <- table(heart_disease_data[[var]], heart_disease_data$diagnosis)
+    if (all(contingency_table > 0)) {
+      # Perform Chi-square test only if all counts are positive
+      chisq_test <- chisq.test(contingency_table)
+      print(chisq_test)
+    } else {
+      message(paste("Chi-square test skipped for", var, "due to zero counts in the contingency table."))
+    }
+  }
+}
+
+
+
+```
+
+
+

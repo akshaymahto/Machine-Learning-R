@@ -1,0 +1,178 @@
+---
+stitle: "relator"
+author: "akshay"
+date: "2024-09-24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+
+## #############################################################################################################
+```{r}
+library(readr)
+library(dplyr)
+data <- read.csv("realtor.csv")
+str(data)
+summary(data)
+```
+```{r}
+# Duplicate observations
+duplicates <- duplicated(data)
+if (sum(duplicates) > 0) {
+  data <- data[!duplicates, ]
+  cat("Removed", sum(duplicates), "duplicate observations\n")
+} else {
+  cat("No duplicate observations found\n")
+}
+
+```
+```{r}
+#  Does any of the variables have missing values?Which ones?
+missing_values <- colSums(is.na(data))
+cat("Missing values per column:\n", missing_values, "\n")
+
+```
+
+```{r}
+# Remove all houses with price less than or equal to 50K.
+
+data <- data %>% filter(price > 50000)
+cat("Removed houses with price <= 50,000\n")
+
+```
+
+
+```{r}
+# Outlier removal with IQR
+Q1 <- quantile(data$price, 0.25, na.rm = TRUE)
+Q3 <- quantile(data$price, 0.75, na.rm = TRUE)
+IQR <- Q3 - Q1
+lower_bound <- Q1 - 1.5 * IQR
+upper_bound <- Q3 + 1.5 * IQR
+data <- data %>% filter(price > lower_bound & price < upper_bound)
+cat("Removed outliers in price using IQR method\n")
+
+```
+
+```{r}
+# Draw a histogram and boxplot of the price. What can you say about the distribution of price variable? Is the price variable positively skewed, symmetric, or negatively skewed?
+hist(data$price, breaks = 20, main = "Distribution of Price", xlab = "Price", ylab = "Frequency")
+boxplot(data$price, main = "Boxplot of Price", xlab = "Price", ylab = "Price")
+
+```
+```{r}
+
+# What percentage of the observations are missing for the price variable?
+missing_price_pct <- (sum(is.na(data$price)) / nrow(data)) * 100
+cat("Percentage of missing values in price:", round(missing_price_pct, 2), "%\n")
+
+```
+
+```{r}
+
+# Use as.Date method to convert the sold date variable from character string to date/time type.Then from this date/time object create two new attributes sold year and sold month to store the year and month that the house was sold, respectively.
+
+# Define format string for sold date (assuming YYYY-MM-DD)
+format_string <- "%Y-%m-%d"
+
+# Convert sold date to date/time object
+data$sold_date <- as.Date(data$sold_date, format = format_string)
+
+# Extract year and month
+data$sold_year <- format(data$sold_date, "%Y")
+data$sold_month <- format(data$sold_date, "%m")
+
+# Convert sold_month to numeric (optional)
+data$sold_month <- as.numeric(data$sold_month)
+```
+
+```{r}
+#Convert the state attribute to factor then take a summary to see how manyobservations are there for each state. Remove states with only one observation from the data.
+data$state <- as.factor(data$state)
+state_counts <- table(data$state)
+states_to_remove <- names(state_counts[state_counts == 1])
+data <- data %>% filter(!state %in% states_to_remove)
+cat("Removed states with only one observation\n")
+
+
+```
+```{r}
+#Is there a statistically significant difference between the average house price for different states? Use appropriate plot and statistic test to answer this question. Check the table at the end of this assignment to see which statistic test and plot you should use
+
+# Boxplot of price by state
+boxplot(data$price ~ data$state)
+
+# Statistical test for difference in price across states (e.g., Kruskal-Wallis test)
+# we  need to consult the assignment table for the appropriate test
+kruskal_test <- kruskal.test(data$price ~ data$state)
+summary(kruskal_test)
+
+# Interpretation of the test result based on p-value
+```
+```{r}
+# 12. Correlation between house price and other variables what is the correlation between house price and the variables sold year, house size, bed, and bath? Note: The “cor” function returns error when NAs are present in the variables. Set use=”pairwise.complete.obs” inside the “cor” function to ignore NAs when computing correlation coefficient between a pair of variables. Think about which correlation method you should use
+
+
+# Load the dataset
+house_data <- read.csv("realtor.csv")
+
+# Inspect the dataset structure
+str(house_data)
+
+```
+```{r}
+
+
+# 12. Correlation between house price and other variables what is the correlation between house price and the variables sold year, house size, bed, and bath? Note: The “cor” function returns error when NAs are present in the variables. Set use=”pairwise.complete.obs” inside the “cor” function to ignore NAs when computing correlation coefficient between a pair of variables. Think about which correlation method you should use
+
+
+# Convert sold_date to Date and extract the year
+house_data$sold_date <- as.Date(house_data$sold_date)
+house_data$sold_year <- as.numeric(format(house_data$sold_date, "%Y"))
+
+# Ensure all columns are numeric
+house_data$price <- as.numeric(house_data$price)
+house_data$house_size <- as.numeric(house_data$house_size)
+house_data$bed <- as.numeric(house_data$bed)
+house_data$bath <- as.numeric(house_data$bath)
+
+# Compute the correlation matrix
+correlation_matrix <- cor(house_data[, c("price", "sold_year", "house_size", "bed", "bath")], 
+                          use = "pairwise.complete.obs", method = "pearson")
+
+# Display the correlation matrix
+print(correlation_matrix)
+
+```
+
+
+```{r}
+house_data <- read.csv("realtor.csv")
+
+# Inspect the dataset structure
+str(house_data)
+```
+
